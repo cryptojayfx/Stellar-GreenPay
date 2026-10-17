@@ -14,6 +14,7 @@ import {
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
+import { useI18n } from '../src/i18n';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -45,6 +46,7 @@ const RANK_MEDALS: Record<number, string> = {
 
 export default function LeaderboardScreen() {
   const router = useRouter();
+  const { t } = useI18n();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +60,7 @@ export default function LeaderboardScreen() {
       const res = await axios.get(`${API_URL}/api/leaderboard`);
       setEntries(res.data.data ?? []);
     } catch {
-      setError('Failed to load leaderboard');
+      setError(t('leaderboard.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -83,18 +85,22 @@ export default function LeaderboardScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Top Donors</Text>
-        <Text style={styles.headerSub}>Ranked by total XLM donated</Text>
+        <Text style={styles.headerTitle}>{t('leaderboard.title')}</Text>
+        <Text style={styles.headerSub}>{t('leaderboard.subtitle')}</Text>
       </View>
 
       {entries.length === 0 ? (
         <View style={styles.centered}>
-          <Text style={styles.emptyText}>No donors yet — be the first!</Text>
+          <Text style={styles.emptyText}>{t('leaderboard.noDonorsYet')}</Text>
         </View>
       ) : (
         entries.map((entry) => {
           const isCurrentUser =
             !!CURRENT_USER_ADDRESS && entry.publicKey === CURRENT_USER_ADDRESS;
+          const projectsLabel =
+            entry.projectsSupported === 1
+              ? t('leaderboard.projectsSupported').replace('{count}', String(entry.projectsSupported))
+              : t('leaderboard.projectsSupportedPlural').replace('{count}', String(entry.projectsSupported));
           return (
             <TouchableOpacity
               key={entry.publicKey}
@@ -118,10 +124,7 @@ export default function LeaderboardScreen() {
                   {entry.displayName ??
                     `${entry.publicKey.slice(0, 6)}…${entry.publicKey.slice(-4)}`}
                 </Text>
-                <Text style={styles.donorMeta}>
-                  {entry.projectsSupported}{' '}
-                  {entry.projectsSupported === 1 ? 'project' : 'projects'}
-                </Text>
+                <Text style={styles.donorMeta}>{projectsLabel}</Text>
               </View>
 
               <View style={styles.rowRight}>

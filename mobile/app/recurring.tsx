@@ -39,6 +39,7 @@ import {
   type RecurringDonation,
   type PaymentRecord,
 } from '../utils/recurringDonations';
+import { useI18n } from '../src/i18n';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 const MIN_AMOUNT_XLM = 1;
@@ -59,18 +60,22 @@ function formatNextDate(isoDate: string): string {
 function DonationCard({
   donation,
   onCancel,
+  t,
 }: {
   donation: RecurringDonation;
   onCancel: (id: string) => void;
+  t: (key: string) => string;
 }) {
   const handleCancel = () => {
     Alert.alert(
-      'Cancel Recurring Donation',
-      `Stop the monthly ${donation.amountXLM} XLM donation to ${donation.projectName}?`,
+      t('recurring.cancelRecurringTitle'),
+      t('recurring.cancelRecurringMsg')
+        .replace('{amount}', donation.amountXLM)
+        .replace('{project}', donation.projectName),
       [
-        { text: 'Keep it', style: 'cancel' },
+        { text: t('recurring.keepIt'), style: 'cancel' },
         {
-          text: 'Cancel donation',
+          text: t('recurring.cancelDonation'),
           style: 'destructive',
           onPress: () => onCancel(donation.id),
         },
@@ -80,8 +85,10 @@ function DonationCard({
 
   const durationText =
     donation.remainingMonths !== null
-      ? `${donation.remainingMonths} month${donation.remainingMonths !== 1 ? 's' : ''} remaining`
-      : 'Ongoing';
+      ? donation.remainingMonths === 1
+        ? t('recurring.durationRemaining').replace('{count}', String(donation.remainingMonths))
+        : t('recurring.durationRemainingPlural').replace('{count}', String(donation.remainingMonths))
+      : t('recurring.durationOngoing');
 
   return (
     <View style={styles.card}>
@@ -94,11 +101,11 @@ function DonationCard({
 
       <View style={styles.cardBody}>
         <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>Next payment</Text>
+          <Text style={styles.metaLabel}>{t('recurring.nextPayment')}</Text>
           <Text style={styles.metaValue}>{formatNextDate(donation.nextDueDate)}</Text>
         </View>
         <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>Duration</Text>
+          <Text style={styles.metaLabel}>{t('recurring.duration')}</Text>
           <Text style={styles.metaValue}>{durationText}</Text>
         </View>
       </View>
@@ -107,16 +114,17 @@ function DonationCard({
         style={styles.cancelBtn}
         onPress={handleCancel}
         activeOpacity={0.7}
-        accessibilityLabel={`Cancel recurring donation to ${donation.projectName}`}
+        accessibilityLabel={t('recurring.cancelRecurringLabel').replace('{project}', donation.projectName)}
         accessibilityRole="button"
       >
-        <Text style={styles.cancelBtnText}>Cancel</Text>
+        <Text style={styles.cancelBtnText}>{t('recurring.cancel')}</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 export default function RecurringScreen() {
+  const { t } = useI18n();
   const [donations, setDonations] = useState<RecurringDonation[]>([]);
   const [history, setHistory] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -159,6 +167,12 @@ export default function RecurringScreen() {
     }
   }, []);
 
+  // Refresh the donation list each time the screen comes into focus so changes
+  // made elsewhere (e.g. from a project detail page) are reflected here.
+  const refresh = useCallback(() => {
+    loadData();
+  }, [loadData]);
+
   useFocusEffect(
     useCallback(() => {
       if (hasLoadedRef.current) return;
@@ -181,15 +195,15 @@ export default function RecurringScreen() {
   const handleCancel = async (id: string) => {
     await cancelRecurringDonation(id);
     setDonations((prev) => prev.filter((d) => d.id !== id));
-    setStatusMessage('Recurring donation cancelled.');
+    setStatusMessage(t('recurring.statusCancelled'));
   };
 
   const handleConfirmSetup = async () => {
     const amountNum = parseFloat(setupAmount);
     if (!setupAmount || Number.isNaN(amountNum) || amountNum < MIN_AMOUNT_XLM) {
       Alert.alert(
-        'Invalid Amount',
-        `Please enter a valid amount (minimum ${MIN_AMOUNT_XLM} XLM).`
+        t('recurring.invalidAmountTitle'),
+        t('recurring.invalidAmountMsg').replace('{min}', String(MIN_AMOUNT_XLM))
       );
       return;
     }
@@ -197,7 +211,7 @@ export default function RecurringScreen() {
     const project =
       projects.find((p) => p.id === selectedProjectId) || projects[0];
     if (!project) {
-      Alert.alert('No Project', 'Please choose a project for the recurring donation.');
+      Alert.alert(t('recurring.noProjectTitle'), t('recurring.noProjectMsg'));
       return;
     }
 
@@ -211,7 +225,9 @@ export default function RecurringScreen() {
     setDonations((prev) => [created, ...prev]);
     setSetupAmount('');
     setStatusMessage(
-      `Recurring donation of ${setupAmount} XLM to ${project.name} set up.`
+      t('recurring.statusSetUp')
+        .replace('{amount}', setupAmount)
+        .replace('{project}', project.name)
     );
   };
 
@@ -231,17 +247,17 @@ export default function RecurringScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Monthly Giving</Text>
-        <Text style={styles.headerSub}>Manage your recurring donations</Text>
+        <Text style={styles.headerTitle}>{t('recurring.title')}</Text>
+        <Text style={styles.headerSub}>{t('recurring.subtitle')}</Text>
       </View>
 
 
       {/* Set up a new recurring donation */}
       {!projectsLoading && projects.length > 0 && (
         <View style={styles.setupCard}>
-          <Text style={styles.setupTitle}>Set up a monthly donation</Text>
+          <Text style={styles.setupTitle}>{t('recurring.setupTitle')}</Text>
 
-          <Text style={styles.label}>Project</Text>
+          <Text style={styles.label}>{t('recurring.labelProject')}</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -274,12 +290,12 @@ export default function RecurringScreen() {
             })}
           </ScrollView>
 
-          <Text style={styles.label}>Amount (XLM)</Text>
+          <Text style={styles.label}>{t('recurring.labelAmount')}</Text>
           <TextInput
             style={styles.input}
             value={setupAmount}
             onChangeText={setSetupAmount}
-            placeholder="e.g. 25"
+            placeholder={t('recurring.amountPlaceholder')}
             placeholderTextColor="#8aaa8a"
             keyboardType="decimal-pad"
             accessibilityLabel="Recurring donation amount in XLM"
@@ -291,20 +307,20 @@ export default function RecurringScreen() {
               style={[styles.actionBtn, styles.confirmBtn]}
               onPress={handleConfirmSetup}
               activeOpacity={0.7}
-              accessibilityLabel="Confirm recurring donation"
+              accessibilityLabel={t('recurring.confirmSetupLabel')}
               accessibilityRole="button"
             >
-              <Text style={styles.confirmBtnText}>Confirm</Text>
+              <Text style={styles.confirmBtnText}>{t('recurring.confirm')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.actionBtn, styles.setupCancelBtn]}
               onPress={handleCancelSetup}
               activeOpacity={0.7}
-              accessibilityLabel="Cancel recurring donation setup"
+              accessibilityLabel={t('recurring.cancelSetupLabel')}
               accessibilityRole="button"
             >
-              <Text style={styles.setupCancelBtnText}>Cancel</Text>
+              <Text style={styles.setupCancelBtnText}>{t('recurring.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -322,23 +338,21 @@ export default function RecurringScreen() {
         </View>
       ) : null}
 
-      {/* Active recurring donations */}
-      {donations.length === 0 ? (
-
+      {/* Tab bar — active donations / payment history */}
       <View style={styles.tabBar}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'active' && styles.tabActive]}
           onPress={() => setActiveTab('active')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.tabText, activeTab === 'active' && styles.tabTextActive]}>Active</Text>
+          <Text style={[styles.tabText, activeTab === 'active' && styles.tabTextActive]}>{t('common.active')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'history' && styles.tabActive]}
           onPress={() => setActiveTab('history')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.tabText, activeTab === 'history' && styles.tabTextActive]}>History</Text>
+          <Text style={[styles.tabText, activeTab === 'history' && styles.tabTextActive]}>{t('common.history')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -346,23 +360,23 @@ export default function RecurringScreen() {
         donations.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>🌱</Text>
-            <Text style={styles.emptyTitle}>No active recurring donations</Text>
+            <Text style={styles.emptyTitle}>{t('recurring.noActiveTitle')}</Text>
             <Text style={styles.emptyText}>
-              Set up a monthly donation from any project page to support ongoing impact.
+              {t('recurring.noActiveDesc')}
             </Text>
           </View>
         ) : (
           donations.map((donation) => (
-            <DonationCard key={donation.id} donation={donation} onCancel={handleCancel} />
+            <DonationCard key={donation.id} donation={donation} onCancel={handleCancel} t={t} />
           ))
         )
       ) : history.length === 0 ? (
 
         <View style={styles.emptyState}>
           <Text style={styles.emptyIcon}>📋</Text>
-          <Text style={styles.emptyTitle}>No payment history</Text>
+          <Text style={styles.emptyTitle}>{t('common.noPaymentHistory')}</Text>
           <Text style={styles.emptyText}>
-            Your past donation payments will appear here.
+            {t('common.noPaymentHistoryDesc')}
           </Text>
         </View>
       ) : (

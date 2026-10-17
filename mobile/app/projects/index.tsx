@@ -9,6 +9,7 @@ import type { ListRenderItemInfo } from 'react-native';
 import axios from 'axios';
 import { useTheme } from '../theme';
 import { getCachedData, setCachedData } from '../../utils/cache';
+import { useI18n } from '../../src/i18n';
 
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
@@ -43,6 +44,7 @@ const progressPercent = (raised: string, goal: string) => {
 export default function ProjectsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [projects, setProjects] = useState<ClimateProject[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<ClimateProject[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,14 +121,14 @@ export default function ProjectsScreen() {
           {parseFloat(project.raisedXLM).toFixed(2)} / {parseFloat(project.goalXLM).toFixed(2)} XLM
         </Text>
       </View>
-      <Text style={[styles.donorCount, { color: colors.muted }]}>{project.donorCount} donors</Text>
+      <Text style={[styles.donorCount, { color: colors.muted }]}>{project.donorCount} {t('project.donors')}</Text>
     </TouchableOpacity>
   ), [colors, router]);
 
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}> 
-        <Text style={[styles.loadingText, { color: colors.secondaryText }]}>Loading projects...</Text>
+        <Text style={[styles.loadingText, { color: colors.secondaryText }]}>{t('project.loadingProjects')}</Text>
       </View>
     );
   }
@@ -135,13 +137,13 @@ export default function ProjectsScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}> 
       {isOffline && (
         <View style={styles.offlineBanner}>
-          <Text style={styles.offlineBannerText}>Offline — showing cached data</Text>
+          <Text style={styles.offlineBannerText}>{t('project.offlineBanner')}</Text>
         </View>
       )}
       <TextInput
 
         style={[styles.searchInput, { backgroundColor: colors.inputBackground, borderColor: colors.inputBorder, color: colors.primaryText }]}
-        placeholder="Search projects..."
+        placeholder={t('project.searchPlaceholder')}
         placeholderTextColor={colors.placeholder}
         value={searchQuery}
         onChangeText={setSearchQuery}

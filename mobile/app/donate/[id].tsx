@@ -21,6 +21,7 @@ import { useBiometricAuth } from '../../hooks/useBiometricAuth';
 import { useTheme } from '../theme';
 import { Keypair, Horizon, TransactionBuilder, Networks, Operation, Asset, Memo } from '@stellar/stellar-sdk';
 import NetInfo from '@react-native-community/netinfo';
+import { useI18n } from '../../src/i18n';
 
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
@@ -43,18 +44,13 @@ interface ClimateProject {
 type StatusKind = 'success' | 'error' | 'info' | null;
 
 /**
- * Render-time hint shown above the Donate button. Reassures the user
- * that we'll either prompt for biometrics or fall back to their device
- * PIN/passcode — we never sign a transaction silently.
+ * Render-time hint shown above the Donate button. Returns a catalog key
+ * so the component can pass it to t() with any needed interpolation.
  */
-function buildBioHint(
-  available: boolean,
-  enrolled: boolean,
-  label: string
-): string {
-  if (!available) return 'No biometric sensor — donations will require your device PIN.';
-  if (!enrolled) return 'No biometric enrolled — donations will require your device PIN.';
-  return `You will be asked to authenticate with ${label} before signing.`;
+function buildBioHintKey(available: boolean, enrolled: boolean): string {
+  if (!available) return 'donate.biometricHintPin';
+  if (!enrolled) return 'donate.biometricHintNoEnroll';
+  return 'donate.biometricHint';
 }
 
 function isAccountNotFoundError(error: unknown): boolean {
@@ -85,6 +81,7 @@ function getFundingUrl(publicKey: string): string {
 
 export default function DonateScreen() {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const { id } = useLocalSearchParams();
 
   const bio = useBiometricAuth();
@@ -111,7 +108,8 @@ export default function DonateScreen() {
   const [showFundingGuide, setShowFundingGuide] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
 
-  const bioHint = buildBioHint(bio.available, bio.enrolled, bio.label);
+  const bioHint = t(buildBioHintKey(bio.available, bio.enrolled))
+    .replace('{label}', bio.label);
   const surfaceAuthFailure = (outcome: string) => {
     setStatusType('error');
     setStatusMessage(outcome || 'Authentication was cancelled. Your donation was not sent.');
@@ -302,7 +300,7 @@ export default function DonateScreen() {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#227239" />
-        <Text style={styles.loadingText}>Loading donation details...</Text>
+        <Text style={styles.loadingText}>{t('common.loading')}</Text>
         <Text style={{ opacity: 0, position: 'absolute', width: 0, height: 0 }}>Loading project...</Text>
       </View>
     );
@@ -314,10 +312,10 @@ export default function DonateScreen() {
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.primaryText }]}>
-          Donate to {selectedProject?.name || 'a project'}
+          {t('donate.title')} {selectedProject?.name || ''}
         </Text>
         <Text style={[styles.subtitle, { color: colors.secondaryText }]}>
-          Choose a project and donate XLM on testnet.
+          {t('donate.selectProject')}
         </Text>
       </View>
 
@@ -370,7 +368,7 @@ export default function DonateScreen() {
           accessibilityRole="button"
         >
           <Text style={[styles.connectButtonText, { color: colors.buttonText }]}>
-            Connect Wallet
+            {t('nav.connectWallet') ?? 'Connect Wallet'}
           </Text>
         </TouchableOpacity>
       ) : (
@@ -384,7 +382,7 @@ export default function DonateScreen() {
           ]}
         >
           <Text style={[styles.walletLabel, { color: colors.secondaryText }]}>
-            Connected wallet
+            {t('donate.connectedWallet')}
           </Text>
           <Text style={[styles.walletAddress, { color: colors.primaryText }]}>
             {publicKey.slice(0, 8)}...{publicKey.slice(-4)}
@@ -398,7 +396,7 @@ export default function DonateScreen() {
           { backgroundColor: colors.surface, borderColor: colors.cardBorder },
         ]}
       >
-        <Text style={[styles.label, { color: colors.primaryText }]}>Amount (XLM)</Text>
+        <Text style={[styles.label, { color: colors.primaryText }]}>{t('donate.amount')}</Text>
         <View style={styles.presetRow}>
           {PRESET_AMOUNTS.map((preset) => {
             const isActive = amount === preset;
@@ -552,13 +550,13 @@ export default function DonateScreen() {
       {isOffline ? (
         <View style={styles.offlineBanner}>
           <Text style={styles.offlineBannerText}>
-            You're offline. Connect to the internet to donate.
+            {t('donate.offline')}
           </Text>
           <TouchableOpacity 
             style={styles.retryButton} 
             onPress={handleDonate}
           >
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={styles.retryButtonText}>{t('home.retry')}</Text>
           </TouchableOpacity>
         </View>
       ) : null}
@@ -572,7 +570,7 @@ export default function DonateScreen() {
           <ActivityIndicator color={colors.buttonText} />
         ) : (
           <Text style={[styles.donateButtonText, { color: colors.buttonText }]}>
-            {submitting ? 'Sending donation...' : `🌱 Donate ${amount || '1'} XLM`}
+            {submitting ? t('donate.donating') : `🌱 ${t('donate.donateButton')} ${amount || '1'} XLM`}
           </Text>
         )}
       </TouchableOpacity>

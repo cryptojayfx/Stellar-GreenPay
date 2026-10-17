@@ -8,6 +8,7 @@ import axios from 'axios';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { useTheme } from './theme';
+import { useI18n } from '../src/i18n';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -35,6 +36,7 @@ interface ImpactStats {
 
 export default function ImpactScreen() {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [profile, setProfile] = useState<DonorProfile | null>(null);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [impactStats, setImpactStats] = useState<ImpactStats | null>(null);
@@ -82,7 +84,7 @@ export default function ImpactScreen() {
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Text style={[styles.loadingText, { color: colors.secondaryText }]}>Loading your impact...</Text>
+        <Text style={[styles.loadingText, { color: colors.secondaryText }]}>{t('impact.loading')}</Text>
       </View>
     );
   }
@@ -90,7 +92,7 @@ export default function ImpactScreen() {
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.primary }]}>
-        <Text style={[styles.title, { color: colors.headerText }]}>My Impact</Text>
+        <Text style={[styles.title, { color: colors.headerText }]}>{t('impact.title')}</Text>
         <Text style={[styles.subtitle, { color: colors.headerText }]}>{publicKey.slice(0, 8)}...{publicKey.slice(-4)}</Text>
       </View>
 
@@ -100,28 +102,28 @@ export default function ImpactScreen() {
           <Text style={[styles.statValue, { color: colors.accent }]}>
             {profile ? parseFloat(profile.totalDonatedXLM).toFixed(2) : '0'}
           </Text>
-          <Text style={[styles.statLabel, { color: colors.muted }]}>XLM Donated</Text>
+          <Text style={[styles.statLabel, { color: colors.muted }]}>{t('impact.xlmDonated')}</Text>
         </View>
         <View style={[styles.statCard, { backgroundColor: colors.surface, shadowColor: colors.cardShadow, borderColor: colors.cardBorder }]}>
           <Text style={[styles.statIcon, { color: colors.accent }]}>🌍</Text>
           <Text style={[styles.statValue, { color: colors.accent }]}>
             {profile ? profile.projectsSupported : 0}
           </Text>
-          <Text style={[styles.statLabel, { color: colors.muted }]}>Projects</Text>
+          <Text style={[styles.statLabel, { color: colors.muted }]}>{t('impact.projects')}</Text>
         </View>
         <View style={[styles.statCard, { backgroundColor: colors.surface, shadowColor: colors.cardShadow, borderColor: colors.cardBorder }]}>
           <Text style={[styles.statIcon, { color: colors.accent }]}>🏆</Text>
           <Text style={[styles.statValue, { color: colors.accent }]}>
             {profile ? profile.badges.length : 0}
           </Text>
-          <Text style={[styles.statLabel, { color: colors.muted }]}>Badges</Text>
+          <Text style={[styles.statLabel, { color: colors.muted }]}>{t('impact.badges')}</Text>
         </View>
       </View>
 
       <View style={[styles.historyCard, { backgroundColor: colors.surface, shadowColor: colors.cardShadow, borderColor: colors.cardBorder }]}>
-        <Text style={[styles.sectionTitle, { color: colors.primaryText }]}>Donation History</Text>
+        <Text style={[styles.sectionTitle, { color: colors.primaryText }]}>{t('impact.donationHistory')}</Text>
         {donations.length === 0 ? (
-          <Text style={[styles.emptyText, { color: colors.secondaryText }]}>No donations yet</Text>
+          <Text style={[styles.emptyText, { color: colors.secondaryText }]}>{t('impact.noDonationsYet')}</Text>
         ) : (
           donations.map(donation => (
             <View key={donation.id} style={[styles.donationRow, { borderBottomColor: colors.border }]}>
@@ -152,16 +154,16 @@ export default function ImpactScreen() {
         collapsable={false}
         style={styles.certificateCard}
       >
-        <Text style={styles.certBrand}>Stellar GreenPay</Text>
-        <Text style={styles.certTitle}>Climate Impact Certificate</Text>
+        <Text style={styles.certBrand}>{t('impact.certBrand')}</Text>
+        <Text style={styles.certTitle}>{t('impact.certTitle')}</Text>
         <Text style={styles.certRow}>
           {publicKey.slice(0, 8)}...{publicKey.slice(-4)}
         </Text>
         <Text style={styles.certRow}>
-          CO₂ Offset: {impactStats?.co2OffsetKg ?? 0} kg
+          {t('impact.certCo2').replace('{value}', String(impactStats?.co2OffsetKg ?? 0))}
         </Text>
         <Text style={styles.certRow}>
-          Total Donated: {profile ? parseFloat(profile.totalDonatedXLM).toFixed(2) : '0'} XLM
+          {t('impact.certTotal').replace('{value}', profile ? parseFloat(profile.totalDonatedXLM).toFixed(2) : '0')}
         </Text>
       </View>
 
@@ -172,7 +174,7 @@ export default function ImpactScreen() {
         accessibilityLabel="Share your climate impact certificate"
         accessibilityRole="button"
       >
-        <Text style={styles.shareButtonText}>Share Certificate</Text>
+        <Text style={styles.shareButtonText}>{t('impact.shareCertificate')}</Text>
       </TouchableOpacity>
     </ScrollView>
   );

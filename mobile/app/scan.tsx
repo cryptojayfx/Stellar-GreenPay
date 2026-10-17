@@ -18,6 +18,7 @@ import {
 import { useRouter } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { StrKey } from '@stellar/stellar-sdk';
+import { useI18n } from '../src/i18n';
 
 const DEEP_LINK_RE   = /greenpay:\/\/donate\?(.+)/;
 
@@ -42,6 +43,7 @@ export function parseScan(data: string): { wallet: string; projectId?: string } 
 
 export default function ScanScreen() {
   const router = useRouter();
+  const { t } = useI18n();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +66,7 @@ export default function ScanScreen() {
 
     const parsed = parseScan(data);
     if (!parsed) {
-      setError(INVALID_QR_MESSAGE);
+      setError(t('scan.invalidQr'));
       return;
     }
 
@@ -82,7 +84,7 @@ export default function ScanScreen() {
   if (!permission) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.message}>Requesting camera permission…</Text>
+        <Text style={styles.message}>{t('scan.requestingPermission')}</Text>
       </View>
     );
   }
@@ -90,16 +92,16 @@ export default function ScanScreen() {
   if (!permission.granted) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.message}>Camera access is required to scan QR codes.</Text>
+        <Text style={styles.message}>{t('scan.cameraRequired')}</Text>
         <TouchableOpacity style={styles.button} onPress={requestPermission}>
-          <Text style={styles.buttonText}>Grant Permission</Text>
+          <Text style={styles.buttonText}>{t('scan.grantPermission')}</Text>
         </TouchableOpacity>
         {Platform.OS !== 'web' && (
           <TouchableOpacity
             style={[styles.button, styles.buttonSecondary]}
             onPress={() => Linking.openSettings()}
           >
-            <Text style={styles.buttonText}>Open Settings</Text>
+            <Text style={styles.buttonText}>{t('scan.openSettings')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -138,10 +140,10 @@ export default function ScanScreen() {
               <Text style={styles.errorText}>{error}</Text>
             </TouchableOpacity>
           ) : scanned ? (
-            <Text style={styles.successText}>QR scanned — opening donation screen…</Text>
+            <Text style={styles.successText}>{t('scan.scanSuccess')}</Text>
           ) : (
             <Text style={styles.hint}>
-              Point the camera at a project wallet QR code
+              {t('scan.hint')}
             </Text>
           )}
 
@@ -150,7 +152,7 @@ export default function ScanScreen() {
               style={[styles.button, { marginTop: 16 }]}
               onPress={() => { setScanned(false); cooldown.current = false; }}
             >
-              <Text style={styles.buttonText}>Scan Again</Text>
+              <Text style={styles.buttonText}>{t('scan.scanAgain')}</Text>
             </TouchableOpacity>
           )}
         </View>

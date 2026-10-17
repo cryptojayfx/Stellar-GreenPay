@@ -21,6 +21,7 @@ import {
   getUnreadNotificationCount,
   setupNotificationListener,
 } from '../utils/notifications';
+import { useI18n } from '../src/i18n';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 const CACHE_KEY_PROJECTS = 'home:projects_list';
@@ -58,6 +59,7 @@ function ProjectCard({
   colors: ReturnType<typeof useTheme>['colors'];
   onPress: () => void;
 }) {
+  const { t } = useI18n();
   const progress = (() => {
     const r = parseFloat(project.raisedXLM);
     const g = parseFloat(project.goalXLM);
@@ -77,10 +79,10 @@ function ProjectCard({
         <Text style={[styles.category, { color: colors.primary }]}>{project.category}</Text>
         <View style={styles.badgeRow}>
           {project.verified && (
-            <View style={[styles.verifiedBadge, { backgroundColor: colors.primary }]}>
-              <Text style={styles.verifiedText}>✓ Verified</Text>
-            </View>
-          )}
+              <View style={[styles.verifiedBadge, { backgroundColor: colors.primary }]}>
+                <Text style={styles.verifiedText}>{t('project.verified')}</Text>
+              </View>
+            )}
         </View>
       </View>
 
@@ -99,7 +101,7 @@ function ProjectCard({
           <Text style={[styles.progressText, { color: colors.secondaryText }]}>
             {parseFloat(project.raisedXLM).toFixed(0)} / {parseFloat(project.goalXLM).toFixed(0)} XLM
           </Text>
-          <Text style={[styles.donorCount, { color: colors.muted }]}>{project.donorCount} donors</Text>
+          <Text style={[styles.donorCount, { color: colors.muted }]}>{project.donorCount} {t('project.donors')}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -109,6 +111,7 @@ function ProjectCard({
 export default function HomeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useI18n();
   const handleScan = () => router.push('/scan' as `${string}`);
   const [projects, setProjects] = useState<ClimateProject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -209,7 +212,7 @@ export default function HomeScreen() {
           networkError ? (
             <View style={styles.errorContainer}>
               <Text style={[styles.errorText, { color: colors.secondaryText }]}>
-                Unable to load projects. Check your connection.
+                {t('home.unableToLoad')}
               </Text>
               <TouchableOpacity
                 style={[styles.retryButton, { backgroundColor: colors.primary }]}
@@ -217,11 +220,11 @@ export default function HomeScreen() {
                 accessibilityLabel="Retry loading projects"
                 accessibilityRole="button"
               >
-                <Text style={[styles.retryText, { color: colors.buttonText }]}>Retry</Text>
+                <Text style={[styles.retryText, { color: colors.buttonText }]}>{t('home.retry')}</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <Text style={[styles.emptyText, { color: colors.muted }]}>No projects found.</Text>
+            <Text style={[styles.emptyText, { color: colors.muted }]}>{t('home.noProjectsFound')}</Text>
           )
         }
         refreshControl={
@@ -245,17 +248,18 @@ function Header({
   colors: ReturnType<typeof useTheme>['colors'];
   unreadCount: number;
 }) {
+  const { t } = useI18n();
   return (
     <View style={[styles.header, { backgroundColor: colors.primary }]}>
       <View style={styles.headerTitleRow}>
-        <Text style={[styles.title, { color: colors.headerText }]}>Stellar GreenPay</Text>
+        <Text style={[styles.title, { color: colors.headerText }]}>{t('home.title')}</Text>
         {unreadCount > 0 && (
           <View style={styles.unreadBadge}>
             <Text style={styles.unreadBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
           </View>
         )}
       </View>
-      <Text style={[styles.subtitle, { color: colors.headerText }]}>Climate donations on Stellar</Text>
+      <Text style={[styles.subtitle, { color: colors.headerText }]}>{t('home.subtitle')}</Text>
     </View>
   );
 }

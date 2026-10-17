@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router';
 import { ThemeProvider, themes } from './theme';
 import { useDeepLink } from '../hooks/useDeepLink';
 import { setupNotificationListener, setupNotificationResponseListener } from '../utils/notifications';
+import { I18nProvider, useI18n } from '../src/i18n';
 
 function DeepLinkHandler() {
   useDeepLink();
@@ -35,13 +36,15 @@ function NotificationHandler() {
   return null;
 }
 
-export default function RootLayout() {
+/** Inner stack that has access to the I18nProvider context. */
+function AppStack() {
+  const { t } = useI18n();
   const colorScheme = useColorScheme();
   const themeMode = colorScheme === 'dark' ? 'dark' : 'light';
   const theme = themes[themeMode];
 
   return (
-    <ThemeProvider>
+    <>
       <DeepLinkHandler />
       <NotificationHandler />
       <StatusBar style={theme.statusBarStyle} />
@@ -50,16 +53,27 @@ export default function RootLayout() {
         headerTintColor: theme.headerText,
         headerTitleStyle: { fontFamily: 'Lora_700Bold' },
       }}>
-        <Stack.Screen name="index" options={{ title: 'Home' }} />
-        <Stack.Screen name="projects" options={{ title: 'Projects' }} />
-        <Stack.Screen name="projects/[id]" options={{ title: 'Project Details' }} />
-        <Stack.Screen name="donate/[id]" options={{ title: 'Donate' }} />
-        <Stack.Screen name="impact" options={{ title: 'My Impact' }} />
-        <Stack.Screen name="profile/[address]" options={{ title: 'Donor Profile' }} />
-        <Stack.Screen name="leaderboard" options={{ title: 'Leaderboard' }} />
-        <Stack.Screen name="recurring" options={{ title: 'Monthly Giving' }} />
-        <Stack.Screen name="scan" options={{ title: 'Scan to Donate', headerShown: false }} />
+        <Stack.Screen name="index" options={{ title: t('nav.home') }} />
+        <Stack.Screen name="projects" options={{ title: t('nav.projects') }} />
+        <Stack.Screen name="projects/[id]" options={{ title: t('nav.projectDetails') }} />
+        <Stack.Screen name="donate/[id]" options={{ title: t('nav.donate') }} />
+        <Stack.Screen name="impact" options={{ title: t('nav.impact') }} />
+        <Stack.Screen name="profile/[address]" options={{ title: t('nav.donorProfile') }} />
+        <Stack.Screen name="leaderboard" options={{ title: t('nav.leaderboard') }} />
+        <Stack.Screen name="recurring" options={{ title: t('nav.recurring') }} />
+        <Stack.Screen name="scan" options={{ title: t('nav.scan'), headerShown: false }} />
+        <Stack.Screen name="settings" options={{ title: t('nav.settings') }} />
       </Stack>
-    </ThemeProvider>
+    </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <I18nProvider>
+      <ThemeProvider>
+        <AppStack />
+      </ThemeProvider>
+    </I18nProvider>
   );
 }

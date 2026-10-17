@@ -46,6 +46,7 @@ import {
   loadRecurringDonations,
   type RecurringDonation,
 } from '../../utils/recurringDonations';
+import { useI18n } from '../../src/i18n';
 
 export function formatNextPaymentDate(isoDate: string): string {
   try {
@@ -210,6 +211,7 @@ const toastStyles = StyleSheet.create({
 
 export default function ProjectDetailScreen() {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const router = useRouter();
   const { id } = useLocalSearchParams();
 
@@ -403,10 +405,10 @@ export default function ProjectDetailScreen() {
   // `accessibilityLabel`. The pushToken check sits BEFORE isFollowing so the
   // a11y label and the rendered text can never disagree.
   const followButtonLabel = (() => {
-    if (followLoading) return '⏳ Loading…';
-    if (!pushToken) return '🔔 Follow for Updates';
-    if (isFollowing) return '✓ Following · Tap to unfollow';
-    return '🔔 Follow for Updates';
+    if (followLoading) return `⏳ ${t('common.loading')}`;
+    if (!pushToken) return t('project.followForUpdates');
+    if (isFollowing) return t('project.following');
+    return t('project.followForUpdates');
   })();
 
   // ── render ────────────────────────────────────────────────────────────────
@@ -415,7 +417,7 @@ export default function ProjectDetailScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Text style={[styles.loadingText, { color: colors.secondaryText }]}>
-          Loading project...
+          {t('common.loading')}
         </Text>
       </View>
     );
@@ -540,14 +542,14 @@ export default function ProjectDetailScreen() {
                 {parseFloat(project.raisedXLM).toFixed(2)}
               </Text>
               <Text style={[styles.statLabel, { color: colors.muted }]}>
-                XLM Raised
+                {t('project.raised')} XLM
               </Text>
             </View>
             <View style={styles.stat}>
               <Text style={[styles.statValue, { color: colors.accent }]}>
                 {project.donorCount}
               </Text>
-              <Text style={[styles.statLabel, { color: colors.muted }]}>Donors</Text>
+              <Text style={[styles.statLabel, { color: colors.muted }]}>{t('project.donors')}</Text>
             </View>
             <View style={styles.stat}>
               <Text style={[styles.statValue, { color: colors.accent }]}>
@@ -818,7 +820,7 @@ export default function ProjectDetailScreen() {
             >
               <Text style={styles.mapPlaceholderIcon}>🌐</Text>
               <Text style={[styles.mapPlaceholderText, { color: colors.secondaryText }]}>
-                Location not available
+                {t('project.locationNotAvailable')}
               </Text>
             </View>
           </View>
@@ -895,7 +897,7 @@ export default function ProjectDetailScreen() {
           accessibilityLabel={`Donate to ${project.name}`}
         >
           <Text style={[styles.donateButtonText, { color: colors.buttonText }]}>
-            🌱 Donate Now
+            🌱 {t('nav.donate')}
           </Text>
         </TouchableOpacity>
 
